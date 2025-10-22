@@ -1,194 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LUMEN Speech & Hearing — Online Catalog</title>
+  <meta name="description" content="LUMEN Speech & Hearing — audiology tests, speech therapy, hearing aids. Book appointments online. Hisar • Hansi • Bhiwani" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <!-- SEO social -->
+  <meta property="og:title" content="LUMEN Speech & Hearing — Online Catalog" />
+  <meta property="og:description" content="Bringing Clarity to Every Voice and Sound — audiology tests, speech therapy, and hearing aids. Book now." />
+  <meta property="og:image" content="assets/og-placeholder.png" />
+  <meta property="og:type" content="website" />
+</head>
+<body>
+  <!-- Floating Book button & WhatsApp -->
+  <a id="whatsapp-book" class="floating-whatsapp" href="https://wa.me/918929196989?text=Hello%20LUMEN%20Team%2C%20I%20want%20to%20book%20an%20appointment." target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" class="icon"><path d="M20.5 3.5L3.5 20.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+    Book / WhatsApp
+  </a>
 
-import React, { useEffect, useState } from "react";
-
-const BRAND_NAME = "LUMEN Speech and Hearing"; const CONTACTS = ["+91 89291 96989", "7357390400"]; const LOCATIONS = ["Hisar", "Hansi", "Bhiwani"]; const UPI_ID = "lumen@upi"; // replace with your real UPI ID const INSTAMOJO_PAYMENT_URL = "https://www.instamojo.com/your-store/checkout-placeholder"; // replace
-
-// starter catalog data const defaultCatalog = [ { id: "svc-pta", type: "service", title: "Pure Tone Audiometry (PTA)", desc: "Hearing threshold test using air and bone conduction.", price: 500, category: "Audiology Tests", }, { id: "svc-imp", type: "service", title: "Impedance Audiometry", desc: "Middle ear evaluation (tympanometry & reflexes).", price: 600, category: "Audiology Tests", }, { id: "svc-bera", type: "service", title: "BERA Test", desc: "Brainstem evoked response audiometry.", price: 1200, category: "Audiology Tests", }, { id: "svc-speech", type: "service", title: "Speech Therapy Session", desc: "One-on-one speech therapy session (45 mins).", price: 600, category: "Speech Therapy", }, { id: "prd-ha-basic", type: "product", title: "Digital Hearing Aid — Basic", desc: "Entry-level digital hearing aid. Rechargeable option available.", price: 12000, category: "Hearing Aids", }, { id: "prd-ha-premium", type: "product", title: "Digital Hearing Aid — Premium", desc: "Advanced features: noise reduction, feedback manager.", price: 55000, category: "Hearing Aids", }, { id: "prd-batt", type: "product", title: "Hearing Aid Batteries (Pack)", desc: "Long-life premium batteries — pack of 6.", price: 200, category: "Accessories", }, ];
-
-function useLocalStorage(key, initial) { const [state, setState] = useState(() => { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : initial; } catch (e) { return initial; } }); useEffect(() => { try { localStorage.setItem(key, JSON.stringify(state)); } catch (e) {} }, [key, state]); return [state, setState]; }
-
-export default function LumenShop() { const [catalog, setCatalog] = useLocalStorage("lumen_catalog_v1", defaultCatalog); const [cart, setCart] = useLocalStorage("lumen_cart_v1", []); const [bookings, setBookings] = useLocalStorage("lumen_bookings_v1", []);
-
-const [query, setQuery] = useState(""); const [filter, setFilter] = useState("all"); const [minPrice, setMinPrice] = useState(0); const [maxPrice, setMaxPrice] = useState(200000); const [adminMode, setAdminMode] = useState(false); const [showCheckout, setShowCheckout] = useState(false); const [checkoutSuccess, setCheckoutSuccess] = useState(null);
-
-useEffect(() => { // ensure price filters reflect data const prices = catalog.map((p) => p.price); if (prices.length) { setMinPrice(Math.min(...prices, 0)); setMaxPrice(Math.max(...prices, 200000)); } }, []);
-
-function addToCart(item) { setCart((c) => { const found = c.find((x) => x.id === item.id); if (found) return c.map((x) => (x.id === item.id ? { ...x, qty: x.qty + 1 } : x)); return [...c, { ...item, qty: 1 }]; }); }
-
-function changeQty(id, qty) { setCart((c) => c.map((x) => (x.id === id ? { ...x, qty } : x)).filter((x) => x.qty > 0)); }
-
-function removeFromCart(id) { setCart((c) => c.filter((x) => x.id !== id)); }
-
-function totalAmount() { return cart.reduce((s, i) => s + i.price * i.qty, 0); }
-
-function handleAdminLogin(password) { if (password === "admin123") setAdminMode(true); else alert("Wrong admin password"); }
-
-function addProduct(p) { setCatalog((c) => [...c, { ...p, id: p.id || prd-${Date.now()} }]); }
-
-function bookAppointment(data) { setBookings((b) => [...b, { id: bk-${Date.now()}, ...data }]); alert("Booking saved. We will contact you to confirm the slot."); }
-
-async function createPaymentLink(amount, purpose) { // TODO: Replace this client-side placeholder with a server API that creates a real Instamojo/Stripe payment // Example flow: // 1. POST /create-payment { amount, purpose, buyer_phone } // 2. Server returns payment_url -> open it const url = ${INSTAMOJO_PAYMENT_URL}?amount=${amount}&purpose=${encodeURIComponent(purpose)}; window.open(url, "_blank"); // For demo, pretend it succeeded setCheckoutSuccess({ status: "pending", amount, method: "instamojo" }); }
-
-function handleCheckoutUPI() { // copy UPI ID to clipboard and show message navigator.clipboard .writeText(UPI_ID) .then(() => alert(UPI ID copied: ${UPI_ID}. Please pay the amount and send screenshot to ${CONTACTS[0]})) .catch(() => alert(Please pay to UPI: ${UPI_ID})); setCheckoutSuccess({ status: "awaiting_upi", amount: totalAmount(), method: "UPI" }); setCart([]); }
-
-const categories = ["All", ...Array.from(new Set(catalog.map((c) => c.category)))];
-
-const visible = catalog.filter((p) => { if (filter !== "all" && p.category !== filter) return false; if (query && !(${p.title} ${p.desc}).toLowerCase().includes(query.toLowerCase())) return false; if (p.price < minPrice || p.price > maxPrice) return false; return true; });
-
-return ( <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white p-6"> <header className="max-w-6xl mx-auto flex items-center justify-between"> <div> <h1 className="text-2xl font-bold text-sky-800">{BRAND_NAME}</h1> <p className="text-sm text-sky-600">Clearer speech. Better hearing. Brighter life.</p> </div> <div className="flex items-center gap-3"> <div className="text-sm text-sky-700">Contact: {CONTACTS.join(" • ")}</div> <button onClick={() => setShowCheckout(true)} className="bg-sky-600 text-white px-3 py-2 rounded shadow" > Cart ({cart.length}) </button> <button onClick={() => { const pw = prompt("Enter admin password"); if (pw !== null) handleAdminLogin(pw); }} className="text-sky-600 border border-sky-200 px-3 py-2 rounded" > Admin </button> </div> </header>
-
-<main className="max-w-6xl mx-auto mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-    {/* Left: Filters */}
-    <aside className="col-span-1 bg-white p-4 rounded shadow">
-      <h3 className="font-semibold mb-2">Search & Filter</h3>
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search services or products"
-        className="w-full border p-2 rounded mb-3"
-      />
-      <label className="block text-sm mb-1">Category</label>
-      <select
-        className="w-full border p-2 rounded mb-3"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-      >
-        <option value="all">All</option>
-        {Array.from(new Set(catalog.map((c) => c.category))).map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-      </select>
-
-      <div className="mb-3">
-        <label className="block text-sm">Price range</label>
-        <div className="flex gap-2 mt-2">
-          <input
-            type="number"
-            className="w-1/2 border p-2 rounded"
-            value={minPrice}
-            onChange={(e) => setMinPrice(Number(e.target.value || 0))}
-          />
-          <input
-            type="number"
-            className="w-1/2 border p-2 rounded"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(Number(e.target.value || 200000))}
-          />
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="brand">
+        <div class="logo">
+          <!-- simple yellow ear svg -->
+          <svg width="56" height="56" viewBox="0 0 64 64" aria-hidden>
+            <circle cx="32" cy="32" r="30" fill="#fff"/>
+            <path d="M36 18c6 0 10 4 10 10s-4 14-10 14" stroke="#FFCC33" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="6" y="52" font-family="Poppins, sans-serif" font-size="10" fill="#073b4c">LUMEN</text>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>LUMEN Speech & Hearing</h1>
+          <p class="tag">Bringing Clarity to Every Voice and Sound</p>
         </div>
       </div>
 
-      <div className="text-xs text-sky-500">Locations: {LOCATIONS.join(", ")}</div>
+      <nav class="nav">
+        <a href="#services">Services</a>
+        <a href="#packages">Packages</a>
+        <a href="#testimonials">Testimonials</a>
+        <a href="#contact">Contact</a>
+        <button class="btn-primary" id="open-booking">Book Appointment</button>
+      </nav>
+    </div>
 
-      {adminMode && (
-        <AdminPanel onAdd={addProduct} onClose={() => setAdminMode(false)} />
-      )}
-    </aside>
+    <div class="hero-banner">
+      <div class="hero-left">
+        <h2>Premium Hearing & Speech Care</h2>
+        <p>Advanced diagnostics, personalized therapy, and modern hearing technology. Home visits & online sessions available.</p>
+        <div class="hero-cta">
+          <button class="btn-ghost" id="scroll-services">Explore Services</button>
+          <a class="btn-primary" href="https://wa.me/918929196989?text=Hi%2C%20I%20want%20to%20know%20about%20your%20services">Talk on WhatsApp</a>
+        </div>
+        <ul class="badges">
+          <li>Hisar • Hansi • Bhiwani</li>
+          <li>Expert Audiologists & SLPs</li>
+          <li>Safe • Evidence-based • Caring</li>
+        </ul>
+      </div>
+      <div class="hero-right">
+        <!-- soundwave / device illustration -->
+        <svg class="wave-illustration" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet" aria-hidden>
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1">
+              <stop offset="0%" stop-color="#90caf9"/>
+              <stop offset="100%" stop-color="#3a7bd5"/>
+            </linearGradient>
+          </defs>
+          <rect width="100%" height="100%" rx="20" fill="url(#g1)" opacity="0.12"></rect>
+          <g transform="translate(40,120)" fill="none" stroke="#3a7bd5" stroke-width="3" stroke-linecap="round">
+            <path d="M0 80 C40 10, 80 150, 120 80 S200 10, 240 80 S320 150, 360 80" stroke-opacity="0.85"/>
+            <circle cx="240" cy="80" r="14" fill="#fff" stroke="#1e88e5" stroke-width="4"></circle>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </header>
 
-    {/* Right: Catalog */}
-    <section className="col-span-3">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {visible.map((p) => (
-          <div key={p.id} className="bg-white p-4 rounded shadow flex gap-4">
-            <div className="w-24 h-24 bg-sky-50 rounded flex items-center justify-center">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2c2.8 0 5 2.2 5 5v3" stroke="#0369a1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M6 7v3c0 6 6 8 6 8s6-2 6-8V7" stroke="#0369a1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-sky-800">{p.title}</h4>
-              <div className="text-sm text-sky-600">{p.desc}</div>
-              <div className="mt-2 flex items-center justify-between">
-                <div className="font-bold">₹{p.price}</div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => addToCart(p)}
-                    className="px-3 py-1 bg-sky-600 text-white rounded"
-                  >
-                    Add
-                  </button>
-                  <button
-                    onClick={() => {
-                      const d = prompt("Book now? Enter preferred date & time (e.g. 2025-10-25 16:00)");
-                      if (d) {
-                        bookAppointment({ item: p, contact: CONTACTS[0], datetime: d, location: LOCATIONS[0] });
-                      }
-                    }}
-                    className="px-3 py-1 border rounded"
-                  >
-                    Book
-                  </button>
+  <main>
+    <!-- SERVICES -->
+    <section id="services" class="section container">
+      <h3 class="section-title">Our Services</h3>
+      <p class="section-sub">Audiology tests, speech therapy sessions, hearing aids & packages — transparent pricing and trusted care.</p>
+
+      <div class="grid">
+        <!-- Audiology Tests -->
+        <div class="card-group">
+          <h4 class="group-title">Audiology Tests</h4>
+          <div class="cards">
+            <article class="card">
+              <div class="card-media svg-avatar audiology"></div>
+              <div class="card-body">
+                <h5>Pure Tone Audiometry (PTA)</h5>
+                <p class="desc">Standard hearing threshold test using air & bone conduction.</p>
+                <div class="card-foot">
+                  <span class="price">₹600</span>
+                  <button class="btn-outline book-now" data-title="Pure Tone Audiometry (PTA)">Book Now</button>
                 </div>
               </div>
-            </div>
+            </article>
+
+            <article class="card">
+              <div class="card-media svg-avatar impedance"></div>
+              <div class="card-body">
+                <h5>Impedance Audiometry</h5>
+                <p class="desc">Middle ear evaluation (tympanometry & reflexes).</p>
+                <div class="card-foot">
+                  <span class="price">₹700</span>
+                  <button class="btn-outline book-now" data-title="Impedance Audiometry">Book Now</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-media svg-avatar oae"></div>
+              <div class="card-body">
+                <h5>OAE Screening</h5>
+                <p class="desc">Newborn & cochlear function screening with quick, objective results.</p>
+                <div class="card-foot">
+                  <span class="price">₹900</span>
+                  <button class="btn-outline book-now" data-title="OAE Screening">Book Now</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-media svg-avatar bera"></div>
+              <div class="card-body">
+                <h5>BERA / BC-ABR</h5>
+                <p class="desc">Brainstem auditory response tests for neural pathway assessment.</p>
+                <div class="card-foot">
+                  <span class="price">₹1500</span>
+                  <button class="btn-outline book-now" data-title="BERA / BC-ABR">Book Now</button>
+                </div>
+              </div>
+            </article>
           </div>
-        ))}
+        </div>
+
+        <!-- Speech Therapy -->
+        <div class="card-group">
+          <h4 class="group-title">Speech Therapy</h4>
+          <div class="cards">
+            <article class="card">
+              <div class="card-media svg-avatar therapy"></div>
+              <div class="card-body">
+                <h5>Child Speech Delay</h5>
+                <p class="desc">Individualized play-based therapy to build speech & language foundations.</p>
+                <div class="card-foot">
+                  <span class="price">₹700 / session</span>
+                  <button class="btn-outline book-now" data-title="Child Speech Delay Therapy">Book Now</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-media svg-avatar stammer"></div>
+              <div class="card-body">
+                <h5>Stammering / Fluency Therapy</h5>
+                <p class="desc">Practical strategies to improve fluency, breathing, and confidence.</p>
+                <div class="card-foot">
+                  <span class="price">₹800 / session</span>
+                  <button class="btn-outline book-now" data-title="Stammering Therapy">Book Now</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-media svg-avatar voice"></div>
+              <div class="card-body">
+                <h5>Voice Therapy</h5>
+                <p class="desc">Therapy for hoarseness, breathy voice, and voice rehabilitation.</p>
+                <div class="card-foot">
+                  <span class="price">₹1000 / session</span>
+                  <button class="btn-outline book-now" data-title="Voice Therapy">Book Now</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-media svg-avatar misart"></div>
+              <div class="card-body">
+                <h5>Misarticulation Therapy</h5>
+                <p class="desc">Targeted articulation drills to improve clarity and speech intelligibility.</p>
+                <div class="card-foot">
+                  <span class="price">₹700 / session</span>
+                  <button class="btn-outline book-now" data-title="Misarticulation Therapy">Book Now</button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- Hearing Aids -->
+        <div class="card-group">
+          <h4 class="group-title">Hearing Aids & Accessories</h4>
+          <div class="cards">
+            <article class="card">
+              <div class="card-media svg-avatar ha-basic"></div>
+              <div class="card-body">
+                <h5>Digital Hearing Aids</h5>
+                <p class="desc">Entry → premium solutions with fitting, programming & follow-up.</p>
+                <div class="card-foot">
+                  <span class="price">From ₹12,000</span>
+                  <button class="btn-outline book-now" data-title="Digital Hearing Aids Consultation">Enquire</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-media svg-avatar rechargeable"></div>
+              <div class="card-body">
+                <h5>Rechargeable Models</h5>
+                <p class="desc">Comfortable & eco-friendly options with long battery life.</p>
+                <div class="card-foot">
+                  <span class="price">From ₹18,000</span>
+                  <button class="btn-outline book-now" data-title="Rechargeable Hearing Aids">Enquire</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-media svg-avatar earmold"></div>
+              <div class="card-body">
+                <h5>Custom Earmolds & Service</h5>
+                <p class="desc">Perfect fit & routine servicing to keep devices working like new.</p>
+                <div class="card-foot">
+                  <span class="price">From ₹1,200</span>
+                  <button class="btn-outline book-now" data-title="Earmolds & Service">Book</button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- Online & Home -->
+        <div class="card-group">
+          <h4 class="group-title">Online & Home</h4>
+          <div class="cards">
+            <article class="card">
+              <div class="card-media svg-avatar online"></div>
+              <div class="card-body">
+                <h5>Online Video Session</h5>
+                <p class="desc">Secure video therapy for convenience and continuity.</p>
+                <div class="card-foot">
+                  <span class="price">₹600 / session</span>
+                  <button class="btn-outline book-now" data-title="Online Video Session">Book Now</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-media svg-avatar homevisit"></div>
+              <div class="card-body">
+                <h5>Home Visit (Local)</h5>
+                <p class="desc">Therapist visit to your home in Hisar for assessments & therapy.</p>
+                <div class="card-foot">
+                  <span class="price">₹800 / visit</span>
+                  <button class="btn-outline book-now" data-title="Home Visit - Hisar">Book</button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PACKAGES -->
+    <section id="packages" class="section alt container">
+      <h3 class="section-title">Care Packages</h3>
+      <div class="packages-grid">
+        <div class="package">
+          <h4>Starter Speech Plan</h4>
+          <p>4 sessions + assessment, progress report & home exercises.</p>
+          <div class="price">₹2,400</div>
+          <button class="btn-primary book-now" data-title="Starter Speech Plan">Book Plan</button>
+        </div>
+        <div class="package">
+          <h4>Comprehensive Hearing Check</h4>
+          <p>PTA + Impedance + OAE + Consultation + Report.</p>
+          <div class="price">₹2,600</div>
+          <button class="btn-primary book-now" data-title="Comprehensive Hearing Check">Book</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section id="testimonials" class="section container">
+      <h3 class="section-title">What Patients Say</h3>
+      <div class="testimonials">
+        <blockquote class="testimonial">
+          <p>“Deepak and team changed my child's life — clearer speech and better confidence in 3 months.”</p>
+          <cite>— Priya K., Hisar</cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>“Professional assessment and quick follow-up. My father’s hearing aid fitting was seamless.”</p>
+          <cite>— Rajesh S., Bhiwani</cite>
+        </blockquote>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="section alt container about">
+      <div class="about-inner">
+        <div class="about-text">
+          <h3>About LUMEN</h3>
+          <p>At LUMEN Speech and Hearing, we believe communication is connection. Our expert audiologists and speech-language pathologists provide personalized therapy, advanced hearing diagnostics, and modern hearing aid solutions with care, empathy, and precision.</p>
+          <p class="founder">Founder: <strong>Deepak</strong> — Audiologist & Speech-Language Pathologist</p>
+        </div>
+        <div class="about-image">
+          <!-- placeholder profile -->
+          <div class="profile-photo" aria-hidden>
+            <svg viewBox="0 0 100 100"><circle cx="50" cy="35" r="20" fill="#cfe8ff"></circle><rect x="10" y="60" width="80" height="30" rx="6" fill="#eaf6ff"></rect></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact" class="section container contact">
+      <h3 class="section-title">Contact & Locations</h3>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <h4>Clinic Branches</h4>
+          <ul>
+            <li>Hisar — Near Main Market</li>
+            <li>Hansi — Local Clinic Area</li>
+            <li>Bhiwani — Central Clinic</li>
+          </ul>
+        </div>
+        <div class="contact-card">
+          <h4>Contact</h4>
+          <p><strong>Phone:</strong> +91 89291 96989 / 73573 90400</p>
+          <p><strong>Email:</strong> lumenhearingcare@gmail.com</p>
+          <p><strong>Instagram:</strong> <a href="https://instagram.com/lumenhearingcare" target="_blank">@lumenhearingcare</a></p>
+          <p><strong>Facebook:</strong> <a href="https://facebook.com/lumenhearingcare" target="_blank">LUMEN Speech and Hearing</a></p>
+        </div>
+        <div class="contact-card">
+          <h4>Quick Book</h4>
+          <p>Prefer chat? Tap WhatsApp to start a booking:</p>
+          <a class="btn-primary" href="https://wa.me/918929196989?text=Hi%20LUMEN%20Team%2C%20I%20would%20like%20to%20book%20an%20appointment.">WhatsApp Us</a>
+        </div>
       </div>
     </section>
   </main>
 
-  {/* Checkout drawer */}
-  {showCheckout && (
-    <div className="fixed inset-0 bg-black/30 flex items-end md:items-center justify-center p-4">
-      <div className="bg-white w-full md:w-2/3 p-6 rounded shadow">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Cart & Checkout</h3>
-          <button onClick={() => setShowCheckout(false)} className="text-sky-600">Close</button>
-        </div>
-        <div className="mt-4">
-          {cart.length === 0 ? (
-            <div className="text-sky-600">Your cart is empty.</div>
-          ) : (
-            <div>
-              <div className="space-y-3">
-                {cart.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold">{c.title}</div>
-                      <div className="text-sm text-sky-500">₹{c.price} x {c.qty}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input type="number" value={c.qty} onChange={(e) => changeQty(c.id, Number(e.target.value || 1))} className="w-16 border p-1 rounded" />
-                      <div className="font-bold">₹{c.price * c.qty}</div>
-                      <button onClick={() => removeFromCart(c.id)} className="text-red-500">Remove</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 flex items-center justify-between">
-                <div className="font-bold">Total: ₹{totalAmount()}</div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => createPaymentLink(totalAmount(), "LUMEN Purchase")}
-                    className="px-4 py-2 bg-green-600 text-white rounded"
-                  >
-                    Pay Online (Instamojo)
-                  </button>
-                  <button
-                    onClick={() => handleCheckoutUPI()}
-                    className="px-4 py-2 border rounded"
-                  >
-                    Pay with UPI
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>© <span id="year"></span> LUMEN Speech & Hearing</div>
+        <div>Made with care • <a href="https://instagram.com/lumenhearingcare" target="_blank">@lumenhearingcare</a></div>
       </div>
     </div>
-  )}
-
-  <footer className="max-w-6xl mx-auto mt-8 text-center text-xs text-sky-500">
-    <div>© {new Date().getFullYear()} {BRAND_NAME} — Locations: {LOCATIONS.join(" • ")}</div>
-    <div>Instagram: @lumenhearingcare</div>
   </footer>
-</div>
 
-); }
+  <!-- Booking Modal -->
+  <div id="booking-modal" class="modal" aria-hidden>
+    <div class="modal-panel">
+      <button class="modal-close" id="close-book">✕</button>
+      <h3 id="modal-title">Book Appointment</h3>
+      <form id="booking-form">
+        <label>
+          Full name
+          <input name="name" required placeholder="Your name" />
+        </label>
+        <label>
+          Phone (WhatsApp)
+          <input name="phone" required placeholder="+91 9XXXXXXXXX" />
+        </label>
+        <label>
+          Service
+          <input name="service" id="service-input" required placeholder="Selected service" />
+        </label>
+        <label>
+          Preferred date & time
+          <input name="datetime" placeholder="2025-10-25 16:00" />
+        </label>
+        <label>
+          Message (optional)
+          <textarea name="message" rows="3" placeholder="Any notes..."></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary">Confirm Booking</button>
+          <button type="button" class="btn-ghost" id="book-via-whatsapp">Book via WhatsApp</button>
+        </div>
+        <div class="success" id="booking-success" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
 
-function AdminPanel({ onAdd, onClose }) { const [form, setForm] = useState({ type: "product", title: "", desc: "", price: 0, category: "Hearing Aids" }); function submit(e) { e.preventDefault(); if (!form.title) return alert("Title required"); onAdd({ ...form, id: ${form.type}-${Date.now()} }); setForm({ type: "product", title: "", desc: "", price: 0, category: "Hearing Aids" }); alert("Product/Service added to catalog (saved in localStorage). Refresh to see changes."); } return ( <div className="mt-4 border-t pt-4"> <h4 className="font-semibold">Admin: Add Product / Service</h4> <form onSubmit={submit} className="space-y-2 mt-2"> <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full border p-2 rounded"> <option value="product">Product</option> <option value="service">Service</option> </select> <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Title" className="w-full border p-2 rounded" /> <input value={form.desc} onChange={(e) => setForm({ ...form, desc: e.target.value })} placeholder="Short description" className="w-full border p-2 rounded" /> <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value || 0) })} placeholder="Price" className="w-full border p-2 rounded" /> <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Category (e.g. Hearing Aids)" className="w-full border p-2 rounded" /> <div className="flex gap-2"> <button className="px-4 py-2 bg-sky-600 text-white rounded" type="submit">Add</button> <button type="button" onClick={onClose} className="px-4 py-2 border rounded">Close Admin</button> </div> </form> </div> ); }
-
+  <script src="script.js"></script>
+</body>
+</html>
