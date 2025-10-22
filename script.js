@@ -69,7 +69,7 @@ bookingForm?.addEventListener('submit', (ev)=>{
   setTimeout(()=> {
     closeModal();
     const text = encodeURIComponent(`Hello LUMEN, I booked: ${booking.service}. Name: ${booking.name}. Phone: ${booking.phone}. Preferred: ${booking.datetime || 'N/A'}`);
-    window.open(`https://wa.me/918929196989?text=${text}`, '_blank');
+    window.open(`https://wa.me/9350158754?text=${text}`, '_blank');
   }, 900);
 });
 
@@ -80,7 +80,7 @@ document.getElementById('book-via-whatsapp')?.addEventListener('click', ()=>{
   const service = bookingForm.service?.value || 'General';
   const dt = bookingForm.datetime?.value || '';
   const text = encodeURIComponent(`Hi LUMEN Team, I'd like to book: ${service}. Name: ${name}. Phone: ${phone}. Preferred: ${dt}`);
-  window.open(`https://wa.me/918929196989?text=${text}`, '_blank');
+  window.open(`https://wa.me/9350158754?text=${text}`, '_blank');
 });
 
 /* close when click outside panel */
