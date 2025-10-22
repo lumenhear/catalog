@@ -1,0 +1,236 @@
+/* LUMEN Speech & Hearing — Shop-style Online Catalog (Single-file React component)
+
+How to use
+
+1. Copy this file into a React project (Create React App / Vite). Tailwind must be enabled.
+
+This component uses Tailwind classes. If you don't have Tailwind, replace classes with plain CSS.
+
+
+
+2. Optional: hook payments to Instamojo/Stripe/your gateway. See the TODOs below.
+
+
+3. The app stores catalog and bookings in localStorage so you can try it locally.
+
+
+
+Features included
+
+Product & Service listing (products: hearing aids, batteries; services: tests, therapy sessions)
+
+Search, category filter, price ranges
+
+Cart with quantity, simple checkout flow (UPI / Instamojo placeholder)
+
+Booking form for appointments with date/time and preferred location
+
+Simple admin mode to add/edit products stored in localStorage (password: admin123)
+
+Responsive single-page layout with product cards and service cards
+
+
+Note about payments
+
+The checkout button opens a placeholder payment flow. Replace createPaymentLink with a server endpoint that creates real payment links (Instamojo/Stripe/PayU) and returns a URL.
+
+For UPI payments you can show QR or deep-link. This app shows a copyable UPI ID by default.
+
+
+Replaceable constants: BRAND_NAME, CONTACTS, UPI_ID, INSTAMOJO_PAYMENT_URL
+
+*/
+
+import React, { useEffect, useState } from "react";
+
+const BRAND_NAME = "LUMEN Speech and Hearing"; const CONTACTS = ["+91 89291 96989", "7357390400"]; const LOCATIONS = ["Hisar", "Hansi", "Bhiwani"]; const UPI_ID = "lumen@upi"; // replace with your real UPI ID const INSTAMOJO_PAYMENT_URL = "https://www.instamojo.com/your-store/checkout-placeholder"; // replace
+
+// starter catalog data const defaultCatalog = [ { id: "svc-pta", type: "service", title: "Pure Tone Audiometry (PTA)", desc: "Hearing threshold test using air and bone conduction.", price: 500, category: "Audiology Tests", }, { id: "svc-imp", type: "service", title: "Impedance Audiometry", desc: "Middle ear evaluation (tympanometry & reflexes).", price: 600, category: "Audiology Tests", }, { id: "svc-bera", type: "service", title: "BERA Test", desc: "Brainstem evoked response audiometry.", price: 1200, category: "Audiology Tests", }, { id: "svc-speech", type: "service", title: "Speech Therapy Session", desc: "One-on-one speech therapy session (45 mins).", price: 600, category: "Speech Therapy", }, { id: "prd-ha-basic", type: "product", title: "Digital Hearing Aid — Basic", desc: "Entry-level digital hearing aid. Rechargeable option available.", price: 12000, category: "Hearing Aids", }, { id: "prd-ha-premium", type: "product", title: "Digital Hearing Aid — Premium", desc: "Advanced features: noise reduction, feedback manager.", price: 55000, category: "Hearing Aids", }, { id: "prd-batt", type: "product", title: "Hearing Aid Batteries (Pack)", desc: "Long-life premium batteries — pack of 6.", price: 200, category: "Accessories", }, ];
+
+function useLocalStorage(key, initial) { const [state, setState] = useState(() => { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : initial; } catch (e) { return initial; } }); useEffect(() => { try { localStorage.setItem(key, JSON.stringify(state)); } catch (e) {} }, [key, state]); return [state, setState]; }
+
+export default function LumenShop() { const [catalog, setCatalog] = useLocalStorage("lumen_catalog_v1", defaultCatalog); const [cart, setCart] = useLocalStorage("lumen_cart_v1", []); const [bookings, setBookings] = useLocalStorage("lumen_bookings_v1", []);
+
+const [query, setQuery] = useState(""); const [filter, setFilter] = useState("all"); const [minPrice, setMinPrice] = useState(0); const [maxPrice, setMaxPrice] = useState(200000); const [adminMode, setAdminMode] = useState(false); const [showCheckout, setShowCheckout] = useState(false); const [checkoutSuccess, setCheckoutSuccess] = useState(null);
+
+useEffect(() => { // ensure price filters reflect data const prices = catalog.map((p) => p.price); if (prices.length) { setMinPrice(Math.min(...prices, 0)); setMaxPrice(Math.max(...prices, 200000)); } }, []);
+
+function addToCart(item) { setCart((c) => { const found = c.find((x) => x.id === item.id); if (found) return c.map((x) => (x.id === item.id ? { ...x, qty: x.qty + 1 } : x)); return [...c, { ...item, qty: 1 }]; }); }
+
+function changeQty(id, qty) { setCart((c) => c.map((x) => (x.id === id ? { ...x, qty } : x)).filter((x) => x.qty > 0)); }
+
+function removeFromCart(id) { setCart((c) => c.filter((x) => x.id !== id)); }
+
+function totalAmount() { return cart.reduce((s, i) => s + i.price * i.qty, 0); }
+
+function handleAdminLogin(password) { if (password === "admin123") setAdminMode(true); else alert("Wrong admin password"); }
+
+function addProduct(p) { setCatalog((c) => [...c, { ...p, id: p.id || prd-${Date.now()} }]); }
+
+function bookAppointment(data) { setBookings((b) => [...b, { id: bk-${Date.now()}, ...data }]); alert("Booking saved. We will contact you to confirm the slot."); }
+
+async function createPaymentLink(amount, purpose) { // TODO: Replace this client-side placeholder with a server API that creates a real Instamojo/Stripe payment // Example flow: // 1. POST /create-payment { amount, purpose, buyer_phone } // 2. Server returns payment_url -> open it const url = ${INSTAMOJO_PAYMENT_URL}?amount=${amount}&purpose=${encodeURIComponent(purpose)}; window.open(url, "_blank"); // For demo, pretend it succeeded setCheckoutSuccess({ status: "pending", amount, method: "instamojo" }); }
+
+function handleCheckoutUPI() { // copy UPI ID to clipboard and show message navigator.clipboard .writeText(UPI_ID) .then(() => alert(UPI ID copied: ${UPI_ID}. Please pay the amount and send screenshot to ${CONTACTS[0]})) .catch(() => alert(Please pay to UPI: ${UPI_ID})); setCheckoutSuccess({ status: "awaiting_upi", amount: totalAmount(), method: "UPI" }); setCart([]); }
+
+const categories = ["All", ...Array.from(new Set(catalog.map((c) => c.category)))];
+
+const visible = catalog.filter((p) => { if (filter !== "all" && p.category !== filter) return false; if (query && !(${p.title} ${p.desc}).toLowerCase().includes(query.toLowerCase())) return false; if (p.price < minPrice || p.price > maxPrice) return false; return true; });
+
+return ( <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white p-6"> <header className="max-w-6xl mx-auto flex items-center justify-between"> <div> <h1 className="text-2xl font-bold text-sky-800">{BRAND_NAME}</h1> <p className="text-sm text-sky-600">Clearer speech. Better hearing. Brighter life.</p> </div> <div className="flex items-center gap-3"> <div className="text-sm text-sky-700">Contact: {CONTACTS.join(" • ")}</div> <button onClick={() => setShowCheckout(true)} className="bg-sky-600 text-white px-3 py-2 rounded shadow" > Cart ({cart.length}) </button> <button onClick={() => { const pw = prompt("Enter admin password"); if (pw !== null) handleAdminLogin(pw); }} className="text-sky-600 border border-sky-200 px-3 py-2 rounded" > Admin </button> </div> </header>
+
+<main className="max-w-6xl mx-auto mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+    {/* Left: Filters */}
+    <aside className="col-span-1 bg-white p-4 rounded shadow">
+      <h3 className="font-semibold mb-2">Search & Filter</h3>
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search services or products"
+        className="w-full border p-2 rounded mb-3"
+      />
+      <label className="block text-sm mb-1">Category</label>
+      <select
+        className="w-full border p-2 rounded mb-3"
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+      >
+        <option value="all">All</option>
+        {Array.from(new Set(catalog.map((c) => c.category))).map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
+
+      <div className="mb-3">
+        <label className="block text-sm">Price range</label>
+        <div className="flex gap-2 mt-2">
+          <input
+            type="number"
+            className="w-1/2 border p-2 rounded"
+            value={minPrice}
+            onChange={(e) => setMinPrice(Number(e.target.value || 0))}
+          />
+          <input
+            type="number"
+            className="w-1/2 border p-2 rounded"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(Number(e.target.value || 200000))}
+          />
+        </div>
+      </div>
+
+      <div className="text-xs text-sky-500">Locations: {LOCATIONS.join(", ")}</div>
+
+      {adminMode && (
+        <AdminPanel onAdd={addProduct} onClose={() => setAdminMode(false)} />
+      )}
+    </aside>
+
+    {/* Right: Catalog */}
+    <section className="col-span-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {visible.map((p) => (
+          <div key={p.id} className="bg-white p-4 rounded shadow flex gap-4">
+            <div className="w-24 h-24 bg-sky-50 rounded flex items-center justify-center">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2c2.8 0 5 2.2 5 5v3" stroke="#0369a1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M6 7v3c0 6 6 8 6 8s6-2 6-8V7" stroke="#0369a1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-sky-800">{p.title}</h4>
+              <div className="text-sm text-sky-600">{p.desc}</div>
+              <div className="mt-2 flex items-center justify-between">
+                <div className="font-bold">₹{p.price}</div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => addToCart(p)}
+                    className="px-3 py-1 bg-sky-600 text-white rounded"
+                  >
+                    Add
+                  </button>
+                  <button
+                    onClick={() => {
+                      const d = prompt("Book now? Enter preferred date & time (e.g. 2025-10-25 16:00)");
+                      if (d) {
+                        bookAppointment({ item: p, contact: CONTACTS[0], datetime: d, location: LOCATIONS[0] });
+                      }
+                    }}
+                    className="px-3 py-1 border rounded"
+                  >
+                    Book
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  </main>
+
+  {/* Checkout drawer */}
+  {showCheckout && (
+    <div className="fixed inset-0 bg-black/30 flex items-end md:items-center justify-center p-4">
+      <div className="bg-white w-full md:w-2/3 p-6 rounded shadow">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Cart & Checkout</h3>
+          <button onClick={() => setShowCheckout(false)} className="text-sky-600">Close</button>
+        </div>
+        <div className="mt-4">
+          {cart.length === 0 ? (
+            <div className="text-sky-600">Your cart is empty.</div>
+          ) : (
+            <div>
+              <div className="space-y-3">
+                {cart.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold">{c.title}</div>
+                      <div className="text-sm text-sky-500">₹{c.price} x {c.qty}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input type="number" value={c.qty} onChange={(e) => changeQty(c.id, Number(e.target.value || 1))} className="w-16 border p-1 rounded" />
+                      <div className="font-bold">₹{c.price * c.qty}</div>
+                      <button onClick={() => removeFromCart(c.id)} className="text-red-500">Remove</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 flex items-center justify-between">
+                <div className="font-bold">Total: ₹{totalAmount()}</div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => createPaymentLink(totalAmount(), "LUMEN Purchase")}
+                    className="px-4 py-2 bg-green-600 text-white rounded"
+                  >
+                    Pay Online (Instamojo)
+                  </button>
+                  <button
+                    onClick={() => handleCheckoutUPI()}
+                    className="px-4 py-2 border rounded"
+                  >
+                    Pay with UPI
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )}
+
+  <footer className="max-w-6xl mx-auto mt-8 text-center text-xs text-sky-500">
+    <div>© {new Date().getFullYear()} {BRAND_NAME} — Locations: {LOCATIONS.join(" • ")}</div>
+    <div>Instagram: @lumenhearingcare</div>
+  </footer>
+</div>
+
+); }
+
+function AdminPanel({ onAdd, onClose }) { const [form, setForm] = useState({ type: "product", title: "", desc: "", price: 0, category: "Hearing Aids" }); function submit(e) { e.preventDefault(); if (!form.title) return alert("Title required"); onAdd({ ...form, id: ${form.type}-${Date.now()} }); setForm({ type: "product", title: "", desc: "", price: 0, category: "Hearing Aids" }); alert("Product/Service added to catalog (saved in localStorage). Refresh to see changes."); } return ( <div className="mt-4 border-t pt-4"> <h4 className="font-semibold">Admin: Add Product / Service</h4> <form onSubmit={submit} className="space-y-2 mt-2"> <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full border p-2 rounded"> <option value="product">Product</option> <option value="service">Service</option> </select> <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Title" className="w-full border p-2 rounded" /> <input value={form.desc} onChange={(e) => setForm({ ...form, desc: e.target.value })} placeholder="Short description" className="w-full border p-2 rounded" /> <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value || 0) })} placeholder="Price" className="w-full border p-2 rounded" /> <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Category (e.g. Hearing Aids)" className="w-full border p-2 rounded" /> <div className="flex gap-2"> <button className="px-4 py-2 bg-sky-600 text-white rounded" type="submit">Add</button> <button type="button" onClick={onClose} className="px-4 py-2 border rounded">Close Admin</button> </div> </form> </div> ); }
+
